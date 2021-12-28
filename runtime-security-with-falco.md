@@ -135,8 +135,7 @@ https://falco.org/docs/getting-started/installation/#installing
 
 Find a Pod running image httpd which modifies /etc/passwd .
 
-Save the Falco logs for case  under /opt/course/2/falco.log in format time,container-id,container-name,user-name . No other
-information should be in any line. Collect the logs for at least 30 seconds.
+Save the Falco logs for case  under /opt/course/2/falco.log in format time,container-id,container-name,user-name . No other information should be in any line. Collect the logs for at least 30 seconds.
 Afterwards remove the threads (both 1 and 2) by scaling the replicas of the Deployments that control the offending Pods down to 0.
 
 
@@ -167,7 +166,74 @@ b1339d5cc2dee f6b40f9f8ad71 httpd ... 595af943c3245
 POD ID ... NAME NAMESPACE ...
 595af943c3245 ... rating-service-68cbdf7b7-v2p6g team-purple ...
 现在我们可以知道是哪个namespace的哪个pod
+
+然后我们首先把这个pod缩容到0
+kubectl -n  team-purple scale deployment rating-service --replicas 0
+
+然后我们停止Falco服务，然后使用falco二进制重新启动服务
+service falco stop
+
+# falco
+Thu Sep 16 06:33:11 2021: Falco version 0.29.1 (driver version 17f5df52a7d9ed6bb12d3b1768460def8439936d)
+Thu Sep 16 06:33:11 2021: Falco initialized with configuration file /etc/falco/falco.yaml
+Thu Sep 16 06:33:11 2021: Loading rules from file /etc/falco/falco_rules.yaml:
+Thu Sep 16 06:33:11 2021: Loading rules from file /etc/falco/falco_rules.local.yaml:
+Thu Sep 16 06:33:11 2021: Loading rules from file /etc/falco/k8s_audit_rules.yaml:
+Thu Sep 16 06:33:12 2021: Starting internal webserver, listening on port 8765
+06:33:17.382603204: Error Package management process launched in container (user=root user_loginuid=-1 command=apk
+container_id=7a5ea6a080d1 container_name=nginx image=docker.io/library/nginx:1.19.2-alpine)
+
+现在我们去/etc/falco目录下尝试查询"Package management process"这行日志的位置
+cd /etc/falco
+# grep -r "Package management process launched" .
+./falco_rules.yaml: Package management process launched in container (user=%user.name user_loginuid=%user.loginuid
+
+然后提示是falco_rules.yaml文件，编辑这个文件找到以下这段配置
 ```
+
+配置如下
+
+```
+# Container is supposed to be immutable. Package management should be done in building the image.
+- rule: Launch Package Management Process in Container
+desc: Package management process ran inside container
+condition: >
+spawned_process
+and container
+and user.name != "_apt"
+and package_mgmt_procs
+and not package_mgmt_ancestor_procs
+and not user_known_package_manager_in_container
+output: >
+Package management process launched in container (user=%user.name user_loginuid=%user.loginuid
+command=%proc.cmdline container_id=%container.id container_name=%container.name
+image=%container.image.repository:%container.image.tag)
+priority: ERROR
+tags: [process, mitre_persistence]
+```
+
+然后我们改成以下的配置
+
+```
+# Container is supposed to be immutable. Package management should be done in building the image.
+- rule: Launch Package Management Process in Container
+desc: Package management process ran inside container
+condition: >
+spawned_process
+and container
+and user.name != "_apt"
+and package_mgmt_procs
+and not package_mgmt_ancestor_procs
+and not user_known_package_manager_in_container
+output: >
+Package management process launched in container evt.time%,%container.id,%container.name,%user.name
+priority: ERROR
+tags: [process, mitre_persistence]
+```
+
+然后我们就重启下falco服务
+
+现在我们使用falco | grep "Package management"等待所有输出的日志保存到指定的文件 /opt/course/2/falco.log 即可
 
 
 
