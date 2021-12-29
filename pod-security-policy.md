@@ -116,3 +116,102 @@ subjects:
   name: system:authenticated
 ```
 
+
+
+
+
+# CKS 考题
+
+There is Deployment container-host-hacker in Namespace team-red which mounts /run/containerd as a hostPath volume on the Node
+where its running. This means that the Pod can access various data about other containers running on the same Node.
+You're asked to forbid this behavior by:
+
+1. Enabling Admission Plugin PodSecurityPolicy in the apiserver
+2. Creating a PodSecurityPolicy named psp-mount which allows hostPath volumes only for directory /tmp
+3. Creating a ClusterRole named psp-mount which allows to use the new PSP
+4. Creating a RoleBinding named psp-mount in Namespace team-red which binds the new ClusterRole to all ServiceAccounts in the Namespace team-red
+Restart the Pod of Deployment container-host-hacker afterwards to verify new creation is prevented.
+NOTE: PSPs can affect the whole cluster. Should you encounter issues you can always disable the Admission Plugin again.
+
+答案：
+
+启动apiserver的 admission plugin PodSecurityPolicy 看上面
+
+Creating a PodSecurityPolicy named psp-mount which allows hostPath volumes only for directory /tmp
+
+```
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: psp-mount
+spec:
+  privileged: false
+  # Required to prevent escalations to root.
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  runAsUser:
+    # Require the container to run without root privileges.
+    rule: 'MustRunAsNonRoot'
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 1
+        max: 65535
+  allowedHostPaths:
+  - pathPrefix: "/tmp/"
+```
+
+
+
+Creating a ClusterRole named psp-mount which allows to use the new PSP
+
+```
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: psp-mount
+rules:
+- apiGroups: ['policy']
+  resources: ['podsecuritypolicies']
+  verbs:     ['use']
+  resourceNames:
+  - psp-mount
+```
+
+Creating a RoleBinding named psp-mount in Namespace team-red which binds the new ClusterRole to all ServiceAccounts in the Namespace team-red
+
+```
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: psp-mount
+  namespace: team-red
+roleRef:
+  kind: ClusterRole
+  name: psp-mount
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: Group
+  apiGroup: rbac.authorization.k8s.io
+  name: system:serviceaccounts:<authorized namespace>
+
+```
+
+
+
+测试新的PSP
+
+```
+kubectl -n team-red rollout restart deploy container-host-hacke
+```
+
+然后我们就可以通过kubectl -n team-red get events 看到报错如下
+
+```
+6s Warning FailedCreate replicaset/container-host-hacker-7b4695b5f4 Error creating: pods
+"container-host-hacker-7b4695b5f4-" is forbidden: PodSecurityPolicy: unable to admit pod:
+[spec.volumes[0].hostPath.pathPrefix: Invalid value: "/run/containerd": is not allowed to be used]
+```
+
