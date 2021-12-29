@@ -26,6 +26,8 @@ vault login s.xxx<root token>
 
 ## 启动Secret Engine
 
+#### KV 
+
 然后我们需要启动secret Engine
 
 ```
@@ -43,4 +45,65 @@ Success! Data written to: secret/cvc
 
 
 
-## PKI
+#### PKI
+
+https://www.vaultproject.io/docs/secrets/pki
+
+启动PKI secret Engine
+
+```
+vault secrets enable pki
+```
+
+
+
+
+
+## Auth Method
+
+Reference: https://www.vaultproject.io/docs/auth/approle
+
+Enable Auth Method
+
+```
+vault auth enable userpass
+```
+
+
+
+#### AppRole
+
+先启动approle auth method
+
+```
+$ vault auth enable approle
+Success! Enabled approle auth method at: approle/
+```
+
+Create a named role:
+
+```
+$ vault write auth/approle/role/my-role \
+    secret_id_ttl=10m \
+    token_num_uses=10 \
+    token_ttl=20m \
+    token_max_ttl=30m \
+    secret_id_num_uses=40
+```
+
+
+
+为什么需要Approle 而不是直接用root token呢？ 是因为root token可以轻易的删库跑路
+
+而Approle我们只需要给一组tech service/ component 一个Approle
+
+然后这个Approle 只能在某个路径读写
+
+
+
+
+
+```
+
+```
+
