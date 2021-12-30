@@ -33,12 +33,14 @@ vault login s.xxx<root token>
 ```
 $ vault secrets enable -path=secret/ kv
 Success! Enabled the kv secrets engine at: secret/
-
 ```
 
 ```
 $ vault kv put secret/cvc pgusername=admin
 Success! Data written to: secret/cvc
+
+$ vault kv put secret/data/dev pgusername=admin
+Success! Data written to: secret/data/dev
 ```
 
 
@@ -99,9 +101,61 @@ $ vault write auth/approle/role/my-role \
 
 然后这个Approle 只能在某个路径读写
 
+现在我们需要定义Policy，然后这个Approle只能在某个路径读写
+
+##### Policy
+
+查看policy
+
+```
+export VAULT_ADDR='http://127.0.0.1:8200'
+export VAULT_TOKEN='s.xxx'
+
+vault policy list
+vault policy read <policy-name>
+```
+
+新建policy
+
+```
+ vault policy write my-policy - << EOF
+path "secret/data/dev/*" {
+  capabilities = ["read", "create", "update"]
+}
+
+path "secret/data/prod" {
+  capabilities = ["read"]
+}
+EOF
+```
+
+测试policy
+
+```bash
+$ export VAULT_TOKEN="$(vault token create -field token -policy=my-policy)"
+/ $ vault token lookup | grep policies
+policies            [default my-policy]
+
+# 然后发现 在secret/data/dev跟其他目录都没有权限
+$ vault kv put secret/data/dev跟其他目录都没有权限 testkey="my-long-password"
+Error writing data to secret/data/dev: Error making API request.
+
+URL: PUT http://127.0.0.1:8200/v1/secret/data/dev
+Code: 403. Errors:
+
+* 1 error occurred:
+	* permission denied
+
+# 测试成功，他只能在secret/data/dev/ 下面目录新建目录下才有权限
+/ $ vault kv put secret/data/dev/base-infra testkey="my-long-password"
+Success! Data written to: secret/data/dev/base-infra
+```
 
 
 
+
+
+mapping policy with approle
 
 ```
 
