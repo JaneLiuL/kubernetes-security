@@ -57,6 +57,12 @@ https://www.vaultproject.io/docs/secrets/pki
 vault secrets enable pki
 ```
 
+Increase the TTL by tuning the secrets engine. The default value of 30 days may be too short, so increase it to 1 year:
+
+```
+vault secrets tune -max-lease-ttl=8760h pki
+```
+
 
 
 
@@ -157,7 +163,15 @@ Success! Data written to: secret/data/dev/base-infra
 
 mapping policy with approle
 
-```
+reference https://www.vaultproject.io/docs/concepts/policies#associating-policies
 
 ```
+vault write auth/approle/role/my-role policies="my-policy"
+```
+
+
+
+
+
+## vault-agent-init
 
