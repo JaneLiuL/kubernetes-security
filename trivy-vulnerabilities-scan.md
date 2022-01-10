@@ -4,6 +4,7 @@
 
 ```
 trivy image [YOUR_IMAGE_NAME]
+trivy image xxx | egrep -i "HIGH|CRITICAL"
 ```
 
 
