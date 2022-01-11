@@ -1,4 +1,6 @@
-# kubernetes-security
+# Kubernetes-security
+
+这是为了学习K8S 安全创建的Git repo， 为此也复习了CKS的考试大纲。
 
 ## cluster-hardening
 
@@ -33,6 +35,7 @@
 - [yaml静态安全扫描Static analysis - Kubesec](./kubesec.md)
 - [针对集群服务检查kube-bench](./kube-bench.md)
 - [针对image 或者文件系统的漏洞扫描Trivy](./trivy-vulnerabilities-scan.md)
+- [dockerfile最佳实践](./dockerfile.md)
 
 
 

@@ -52,3 +52,48 @@ curl https://kubernetes.default/api/v1/namespaces/data-xx/secrets -H "Authorizat
 
 
 然后我们只需要将拿到的值decode就是我们需要的secrets拉
+
+
+
+
+
+题目
+
+Create a secret named "secret1" in the "seminar" namespace using details:
+
+user: admin pass : P455W0RD
+
+Create a pod named “secretpod” in the namespace "seminar" using the image nginx and mount the secret as a volume with "readOnly" option.
+
+答案
+
+```bash
+# 创建secret
+kubectl  create secret generic secret1 --from-literal=user=admin --from-literal=pass=P455W0RD  -n seminar
+
+```
+
+创建pod
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: secretpod
+  name: secretpod
+spec:
+  containers:
+  - image: nginx
+    name: secretpod
+    volumeMounts:
+    - name: foo
+      mountPath: "/etc/foo"
+      readOnly: true
+  volumes:
+  - name: foo
+    secret:
+      secretName: secret1
+```
+
