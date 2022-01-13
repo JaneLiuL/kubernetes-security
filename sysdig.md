@@ -29,3 +29,13 @@ sysdig -w myfile
 
 ```
 
+
+
+使用sysdig 来至少30秒 去过滤检查容器ID 为e6b959eac699的调用并且保存到 log里面，格式为
+
+[timestamp], [uid], [processName]
+
+```bash
+sysdig -M 31 -p "*%evt.time,%user.uid,%proc.name" container.id=e6b959eac699
+```
+

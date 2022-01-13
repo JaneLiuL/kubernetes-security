@@ -16,6 +16,8 @@
 
 - [Apparmor](./apparmor.md)
 
+- [Seccomp](./seccomp.md)
+
 - [gVisor--TODO]()
 
 - [Network Policy](./networkpolicy.md)
