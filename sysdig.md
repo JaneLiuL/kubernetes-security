@@ -39,3 +39,10 @@ sysdig -w myfile
 sysdig -M 31 -p "*%evt.time,%user.uid,%proc.name" container.id=e6b959eac699
 ```
 
+
+
+TODO:
+
+看下下面的链接
+
+https://wohin.me/tan-suo-sysdig-falco-rong-qi-huan-jing-xia-de-yi-chang-xing-wei-jian-ce-gong-ju/
