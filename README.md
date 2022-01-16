@@ -74,3 +74,10 @@
 - [审计-Audit](./audit.md)
 - [Linux系统调用行为监控Falco](./falco.md)
 - [系统级别的故障排查Sysdig](./sysdig.md)
+
+Reference
+https://blog.csdn.net/saynaihe/article/details/122133395
+https://github.com/moabukar/CKS-Exercises-Certified-Kubernetes-Security-Specialist
+https://github.com/lmtbelmonte/cks-cert
+https://github.com/jayendrapatil/kubernetes-exercises/tree/main/topics
+https://github.com/ggnanasekaran77/cks-exam-tips
